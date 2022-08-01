@@ -9,13 +9,25 @@ import Foundation
 
 class ApplicationCoordinator: BaseCoordinator {
     
+    private let model = MainModel()
+    
     override func start() {
-        showViewController()
+        showHomeViewController()
     }
     
-    private func showViewController() {
-        var viewController = ViewController()
+    private func showHomeViewController() {
+        let homeViewModel = HomeViewModel(model: model)
+        let viewController = HomeViewController(viewModel: homeViewModel)
+        viewController.onForecast = { [weak self] weatherData in
+            self?.showForecast(weatherData)
+        }
         router.pushViewController(viewController, animated: true)
+    }
+    
+    private func showForecast(_ weatherData: LocationWeatherData) {
+        let forecastViewModel = ForecastViewModel(weatherData: weatherData, model: model)
+        let forecastViewController = ForecastViewController(viewModel: forecastViewModel)
+        router.pushViewController(forecastViewController, animated: true)
     }
     
 }

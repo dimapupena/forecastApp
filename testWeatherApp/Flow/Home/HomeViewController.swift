@@ -9,6 +9,8 @@ import UIKit
 
 class HomeViewController: UIViewController {
     
+    var onForecast: ((LocationWeatherData) -> Void)?
+    
     static private let weahterCellIdentifier = "WeatherTableViewCell"
     private var viewModel: HomeViewModel!
     
@@ -26,41 +28,49 @@ class HomeViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        view.backgroundColor = .systemRed
+        view.backgroundColor = UIColor(red: 217/255.0, green: 202/255.0, blue: 202/255.0, alpha: 1.0)
         setupTableView()
+        
+        showLoader()
+        viewModel.loadDataSource { [weak self] in
+            self?.weatherTableView.reloadData()
+            self?.hideLoader()
+        }
     }
     
     private func setupTableView() {
         weatherTableView = UITableView()
         weatherTableView.delegate = self
         weatherTableView.dataSource = self
-        weatherTableView.register(UITableViewCell.self, forCellReuseIdentifier: Self.weahterCellIdentifier)
-        weatherTableView.showsVerticalScrollIndicator = false
-        weatherTableView.separatorStyle = .none
+        weatherTableView.backgroundColor = .clear
+        weatherTableView.register(WeahterTableViewCell.self, forCellReuseIdentifier: Self.weahterCellIdentifier)
         weatherTableView.translatesAutoresizingMaskIntoConstraints = false
         
         view.addSubview(weatherTableView)
         weatherTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
-        weatherTableView.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
+        weatherTableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
         weatherTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
-        weatherTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
+        weatherTableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor).isActive = true
     }
 }
 
 extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 50
+        return viewModel.dataSource.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: Self.weahterCellIdentifier, for: indexPath)
-        cell.textLabel?.text = "Title"
+        let cell = tableView.dequeueReusableCell(withIdentifier: Self.weahterCellIdentifier, for: indexPath) as! WeahterTableViewCell
+        cell.updateView(locationWeather: viewModel.dataSource[indexPath.row])
         return cell
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        viewModel.getData()
+        onForecast?(viewModel.dataSource[indexPath.row])
+    }
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 100
     }
     
 }
-

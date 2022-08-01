@@ -6,17 +6,26 @@
 //
 
 import Foundation
+import UIKit
 
 class HomeViewModel {
         
+    var dataSource: [LocationWeatherData] = []
     var model: MainModel!
     
     init(model: MainModel) {
         self.model = model
     }
     
-    func getData() {
-        model.getData()
+    func loadDataSource(completion: @escaping (() -> Void)) {
+        model.loadDataSource { [weak self] dataSource in
+            self?.dataSource = dataSource
+            completion()
+        }
+    }
+    
+    func loadWeatherImage(imageCode: String, completion: @escaping (UIImage?) -> Void) {
+        model.loadWeatherImage(imageCode: imageCode, completion: completion)
     }
     
 }
