@@ -14,6 +14,7 @@ class HomeViewController: UIViewController {
     static private let weahterCellIdentifier = "WeatherTableViewCell"
     private var viewModel: HomeViewModel!
     
+    private var searchBar: UISearchBar!
     private var weatherTableView: UITableView!
     
     init(viewModel: HomeViewModel) {
@@ -28,7 +29,9 @@ class HomeViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        view.backgroundColor = UIColor(red: 217/255.0, green: 202/255.0, blue: 202/255.0, alpha: 1.0)
+        view.backgroundColor = .mainColor
+        navigationController?.setNavigationBarHidden(false, animated: false)
+        setupSearchBar()
         setupTableView()
         
         showLoader()
@@ -36,6 +39,16 @@ class HomeViewController: UIViewController {
             self?.weatherTableView.reloadData()
             self?.hideLoader()
         }
+    }
+    
+    private func setupSearchBar() {
+        searchBar = UISearchBar()
+        searchBar.searchBarStyle = UISearchBar.Style.default
+        searchBar.placeholder = " Search..."
+        searchBar.sizeToFit()
+        searchBar.isTranslucent = false
+        searchBar.delegate = self
+        navigationItem.titleView = searchBar
     }
     
     private func setupTableView() {
@@ -56,21 +69,47 @@ class HomeViewController: UIViewController {
 
 extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return viewModel.dataSource.count
+        if viewModel.searching {
+            return viewModel.searchList.count
+        } else {
+            return viewModel.dataSource.count
+        }
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: Self.weahterCellIdentifier, for: indexPath) as! WeahterTableViewCell
-        cell.updateView(locationWeather: viewModel.dataSource[indexPath.row])
+        if viewModel.searching {
+            cell.updateView(locationWeather: viewModel.searchList[indexPath.row])
+        } else {
+            cell.updateView(locationWeather: viewModel.dataSource[indexPath.row])
+        }
         return cell
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        onForecast?(viewModel.dataSource[indexPath.row])
+        if viewModel.searching {
+            onForecast?(viewModel.searchList[indexPath.row])
+        } else {
+            onForecast?(viewModel.dataSource[indexPath.row])
+        }
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 100
     }
     
+}
+
+extension HomeViewController: UISearchBarDelegate {
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        viewModel.updateSearchList(searchText: searchText)
+        viewModel.searching = true
+        weatherTableView.reloadData()
+    }
+    
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        viewModel.searching = false
+        searchBar.text = ""
+        weatherTableView.reloadData()
+    }
 }
